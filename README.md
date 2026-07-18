@@ -3,40 +3,33 @@
 [![Go Version](https://img.shields.io/badge/Go-1.19+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-Aplikasi CLI untuk memvalidasi dan menampilkan informasi lengkap dari **Nomor Induk Kependudukan (NIK)** KTP Indonesia.  
-Pengguna cukup memasukkan NIK, dan program langsung menampilkan data kependudukan dalam format tabel yang informatif.
+Aplikasi CLI untuk memvalidasi dan menampilkan informasi lengkap dari **Nomor Induk Kependudukan (NIK)** KTP Indonesia. Pengguna memasukkan NIK, dan program menampilkan data kependudukan dalam format tabel.
 
----
+## Fitur
 
-## ✨ Fitur
+- **Input interaktif**: NIK 16 digit dimasukkan langsung melalui terminal.
+- **Validasi ketat**: pemeriksaan panjang input, format digit, rentang bulan (01 sampai 12), serta validitas tanggal lahir (maksimal 31, aturan bulan 30 hari, Februari maksimal 29).
+- **Koreksi otomatis**: apabila kode tanggal lebih besar dari 40, jenis kelamin ditetapkan perempuan dan tanggal lahir dikurangi 40.
+- **Lookup wilayah offline**: kode provinsi, kabupaten/kota, kecamatan, dan kode pos diambil dari `data.json`.
+- **Output tabel ringkas**: seluruh informasi kependudukan ditampilkan dalam format tabel yang terstruktur.
 
-- **Input interaktif** – masukkan NIK 16 digit langsung di terminal.
-- **Validasi ketat** – cek panjang, hanya digit, rentang bulan (01–12), serta tanggal lahir (maks 31, aturan 30 hari, Februari maks 29).
-- **Koreksi otomatis** – jika kode tanggal > 40, jenis kelamin menjadi perempuan dan tanggal lahir dikurangi 40.
-- **Lookup wilayah offline** – kode provinsi, kabupaten/kota, kecamatan, dan kode pos diambil dari `data.json`.
-- **Output tabel ringkas** – semua informasi kependudukan ditampilkan dalam format tabel yang mudah dibaca.
-
----
-
-## 📁 Struktur Proyek
+## Struktur Proyek
 
 ```
 nik-checker/
-├── cmd/nik-checker/main.go      # Titik masuk program
+├── cmd/nik-checker/main.go      Titik masuk program
 ├── internal/
-│   ├── data/loader.go           # Pemuat & pencari data wilayah
-│   ├── nik/parser.go            # Validasi & parsing NIK
-│   └── output/formatter.go      # Render tabel (dan JSON opsional)
-├── data.json                    # Data wilayah lengkap
+│   ├── data/loader.go           Pemuat dan pencari data wilayah
+│   ├── nik/parser.go            Validasi dan parsing NIK
+│   └── output/formatter.go      Render tabel (dan JSON opsional)
+├── data.json                    Data wilayah lengkap
 ├── go.mod
 ├── go.sum
 ├── LICENSE
 └── README.md
 ```
 
----
-
-## ⚙️ Instalasi
+## Instalasi
 
 ```bash
 git clone https://github.com/andikaputradev/nik-checker.git
@@ -44,22 +37,18 @@ cd nik-checker
 go build -o nik-checker ./cmd/nik-checker/
 ```
 
----
+## Penggunaan
 
-## 🚀 Penggunaan
-
-Jalankan program, masukkan NIK saat diminta:
+Jalankan program, kemudian masukkan NIK saat diminta.
 
 ```bash
 ./nik-checker
 Input NIK: 3273014106960002
 ```
 
-Program akan langsung menampilkan output seperti di bawah ini.
+Program akan menampilkan output sebagaimana contoh berikut.
 
----
-
-## 📋 Contoh Output
+## Contoh Output
 
 ```
 Input NIK: 3273014106960002
@@ -75,39 +64,22 @@ Uniqcode             : 0002
 --------------------------------------------------
 ```
 
----
+## Detail Teknis
 
-## 🧠 Teknis Singkat
+**Koreksi gender dan tanggal lahir**
+Digit ke-7 dan ke-8 NIK merepresentasikan tanggal (DD). Apabila nilai DD lebih besar dari 40, jenis kelamin ditetapkan perempuan dan tanggal lahir sebenarnya dihitung sebagai DD dikurangi 40. Contoh: nilai 41 diinterpretasikan sebagai perempuan dengan tanggal lahir 1.
 
-- **Koreksi gender & tanggal lahir**  
-  Digit ke-7 dan ke-8 NIK adalah `DD`. Jika `DD > 40`, maka **perempuan** dan tanggal lahir sebenarnya = `DD - 40`. Contoh: `41` → perempuan, tanggal `1`.
+**Validasi kalender**
+Bulan harus berada pada rentang 01 sampai 12. Hari tidak boleh melebihi batas bulan terkait (April, Juni, September, dan November maksimal 30 hari; Februari maksimal 29 hari).
 
-- **Validasi kalender**  
-  Bulan harus 01–12. Hari tidak boleh melebihi batas bulan (April, Juni, September, November maks 30; Februari maks 29).
+**Lookup wilayah tanpa alokasi besar**
+Data wilayah disimpan sebagai byte slice mentah. Pencarian menggunakan `jsonparser.GetString` tanpa membentuk map penuh, sehingga penggunaan memori tetap rendah.
 
-- **Lookup wilayah tanpa alokasi besar**  
-  Data wilayah disimpan sebagai byte slice mentah. Pencarian menggunakan `jsonparser.GetString` tanpa membuat map penuh, menjaga memori tetap rendah.
+## Lisensi
 
----
+Proyek ini dilisensikan di bawah [MIT License](LICENSE). Data wilayah (`data.json`) bersumber dari data publik pemerintah Indonesia untuk keperluan edukasi.
 
-## 📦 GitHub Repository
-
-**Deskripsi (Description)**:  
-> CLI tool untuk validasi dan penelusuran NIK KTP Indonesia. Masukkan NIK, dapatkan tanggal lahir, jenis kelamin, provinsi, kab/kota, kecamatan, dan kode pos secara instan.
-
-**Tags (Topics)**:  
-`go` `golang` `nik-checker` `ktp` `indonesia` `cli` `validation` `data-validation` `json` `open-source` `identity`
-
----
-
-## 📜 Lisensi
-
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).  
-Data wilayah (`data.json`) bersumber dari data publik pemerintah Indonesia untuk keperluan edukasi.
-
----
-
-## 📬 Kontak
+## Kontak
 
 <div align="center">
 
@@ -120,7 +92,4 @@ Data wilayah (`data.json`) bersumber dari data publik pemerintah Indonesia untuk
 
 </div>
 
----
-
-*Dipersembahkan oleh*  
-**Wahyu Andika Putra**
+Dipersembahkan oleh **Wahyu Andika Putra**.

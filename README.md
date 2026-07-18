@@ -2,34 +2,39 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.19+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Release](https://img.shields.io/badge/Release-v1.0.0-2088FF?style=flat-square&logo=github)](https://github.com/wahyuandikaputra/nik-checker/releases)
 
-Aplikasi **CLI** berbahasa Indonesia untuk validasi, parsing, dan penelusuran informasi lengkap **Nomor Induk Kependudukan (NIK)** KTP Indonesia.  
-Dirancang dengan arsitektur **modular**, **zero-allocation parsing**, dan **lookup data wilayah** berbasis `jsonparser` tanpa *unmarshaling* penuh.
+Aplikasi CLI untuk memvalidasi dan menampilkan informasi lengkap dari **Nomor Induk Kependudukan (NIK)** KTP Indonesia.  
+Pengguna cukup memasukkan NIK, dan program langsung menampilkan data kependudukan dalam format tabel yang informatif.
+
+---
 
 ## ✨ Fitur
 
-- Validasi ketat 16 digit (panjang, numerik, rentang bulan & tanggal lahir).
-- Koreksi otomatis tanggal lahir dan jenis kelamin berdasarkan aturan kode NIK (DD>40).
-- Pencarian wilayah offline: provinsi, kab/kota, kecamatan, kode pos.
-- Dukungan output **tabel** ringkas atau **JSON**.
-- Mode **batch** untuk memproses ribuan NIK dari berkas teks.
-- Memory-safe, *production-ready*.
+- **Input interaktif** – masukkan NIK 16 digit langsung di terminal.
+- **Validasi ketat** – cek panjang, hanya digit, rentang bulan (01–12), serta tanggal lahir (maks 31, aturan 30 hari, Februari maks 29).
+- **Koreksi otomatis** – jika kode tanggal > 40, jenis kelamin menjadi perempuan dan tanggal lahir dikurangi 40.
+- **Lookup wilayah offline** – kode provinsi, kabupaten/kota, kecamatan, dan kode pos diambil dari `data.json`.
+- **Output tabel ringkas** – semua informasi kependudukan ditampilkan dalam format tabel yang mudah dibaca.
+
+---
 
 ## 📁 Struktur Proyek
 
 ```
 nik-checker/
-├── cmd/nik-checker/main.go      # Orkestrator: mode interaktif, batch, flag
+├── cmd/nik-checker/main.go      # Titik masuk program
 ├── internal/
-│   ├── data/loader.go           # Singleton loader & lookup wilayah
-│   ├── nik/parser.go            # Pure function validasi & parsing NIK
-│   └── output/formatter.go      # Render tabel & JSON
-├── data.json                    # Data wilayah (provinsi, kab/kota, kecamatan)
-├── go.mod / go.sum
+│   ├── data/loader.go           # Pemuat & pencari data wilayah
+│   ├── nik/parser.go            # Validasi & parsing NIK
+│   └── output/formatter.go      # Render tabel (dan JSON opsional)
+├── data.json                    # Data wilayah lengkap
+├── go.mod
+├── go.sum
 ├── LICENSE
 └── README.md
 ```
+
+---
 
 ## ⚙️ Instalasi
 
@@ -39,30 +44,25 @@ cd nik-checker
 go build -o nik-checker ./cmd/nik-checker/
 ```
 
+---
+
 ## 🚀 Penggunaan
 
-**Mode Interaktif:**
+Jalankan program, masukkan NIK saat diminta:
+
 ```bash
-./nik-checker -data data.json
+./nik-checker
+Input NIK: 3273014106960002
 ```
 
-**Mode Batch:**
-```bash
-./nik-checker -data data.json -input daftar_nik.txt -format json > hasil.json
-```
+Program akan langsung menampilkan output seperti di bawah ini.
 
-**Flag:**
-| Flag | Default | Keterangan |
-|------|---------|------------|
-| `-data` | `data.json` | Path berkas data wilayah |
-| `-input` | - | Path berkas daftar NIK (mode batch) |
-| `-format` | `table` | Format output: `table` atau `json` |
-
+---
 
 ## 📋 Contoh Output
 
-**Tabel**:
 ```
+Input NIK: 3273014106960002
 --------------------------------------------------
 NIK                  : 3273014106960002
 Tanggal Lahir        : 1/06/96
@@ -75,27 +75,37 @@ Uniqcode             : 0002
 --------------------------------------------------
 ```
 
-**JSON**:
-```json
-{"nik":"3273014106960002","tanggal_lahir":"1/06/96","jenis_kelamin":"PEREMPUAN","provinsi":"JAWA BARAT","kab_kota":"KOTA BANDUNG","kecamatan":"SUKASARI","kode_pos":"40151","uniqcode":"0002"}
-```
+---
 
 ## 🧠 Teknis Singkat
 
-- **Koreksi Gender & Tanggal**: `DD = digit ke-7&8`, jika >40 → perempuan, lahir = DD-40. Validasi bulan (01-12) dan hari sesuai bulan.
-- **Lookup Wilayah**: `jsonparser.GetString` langsung ke byte slice, tanpa alokasi map penuh.
-- **Keamanan**: slicing aman, validasi panjang, nol `unsafe`, error tertangani eksplisit.
+- **Koreksi gender & tanggal lahir**  
+  Digit ke-7 dan ke-8 NIK adalah `DD`. Jika `DD > 40`, maka **perempuan** dan tanggal lahir sebenarnya = `DD - 40`. Contoh: `41` → perempuan, tanggal `1`.
 
-## 📦 GitHub Repo
+- **Validasi kalender**  
+  Bulan harus 01–12. Hari tidak boleh melebihi batas bulan (April, Juni, September, November maks 30; Februari maks 29).
 
-**Deskripsi**:  
-> CLI tool untuk validasi, parsing, dan pelacakan NIK KTP Indonesia dengan lookup wilayah terintegrasi. Dibangun dengan Go, arsitektur modular, siap produksi.
+- **Lookup wilayah tanpa alokasi besar**  
+  Data wilayah disimpan sebagai byte slice mentah. Pencarian menggunakan `jsonparser.GetString` tanpa membuat map penuh, menjaga memori tetap rendah.
 
-**Tags**: `go` `golang` `nik-checker` `ktp` `indonesia` `cli` `validation` `data-validation` `json` `security` `open-source` `identity` `tools`
+---
+
+## 📦 GitHub Repository
+
+**Deskripsi (Description)**:  
+> CLI tool untuk validasi dan penelusuran NIK KTP Indonesia. Masukkan NIK, dapatkan tanggal lahir, jenis kelamin, provinsi, kab/kota, kecamatan, dan kode pos secara instan.
+
+**Tags (Topics)**:  
+`go` `golang` `nik-checker` `ktp` `indonesia` `cli` `validation` `data-validation` `json` `open-source` `identity`
+
+---
 
 ## 📜 Lisensi
 
-MIT License. Lihat [LICENSE](LICENSE). Data wilayah (`data.json`) berasal dari data publik pemerintah Indonesia untuk keperluan edukasi.
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).  
+Data wilayah (`data.json`) bersumber dari data publik pemerintah Indonesia untuk keperluan edukasi.
+
+---
 
 ## 📬 Kontak
 
@@ -109,6 +119,8 @@ MIT License. Lihat [LICENSE](LICENSE). Data wilayah (`data.json`) berasal dari d
 [![Indonesia](https://img.shields.io/badge/Indonesia-CE1126?style=flat-square&logo=googlemaps&logoColor=white)](#)
 
 </div>
+
+---
 
 *Dipersembahkan oleh*  
 **Wahyu Andika Putra**

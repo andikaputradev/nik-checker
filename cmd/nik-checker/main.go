@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -14,21 +13,8 @@ import (
 )
 
 func main() {
-	var dataPath string
-	var inputFile string
-	var outputFormat string
-	flag.StringVar(&dataPath, "data", "data.json", "path ke data.json")
-	flag.StringVar(&inputFile, "input", "", "file batch berisi daftar NIK, satu per baris")
-	flag.StringVar(&outputFormat, "format", "table", "format output: table atau json")
-	flag.Parse()
-
-	if err := data.Load(dataPath); err != nil {
+	if err := data.Load("data.json"); err != nil {
 		log.Fatalf("ERROR: %v", err)
-	}
-
-	if inputFile != "" {
-		processBatch(inputFile, outputFormat)
-		return
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -38,14 +24,12 @@ func main() {
 		log.Fatalf("Gagal membaca input: %v", err)
 	}
 	nikStr = strings.TrimSpace(nikStr)
-	processSingle(nikStr, outputFormat)
-}
 
-func processSingle(nikStr string, format string) {
 	parsed, err := nik.Parse(nikStr)
 	if err != nil {
 		log.Fatalf("NIK tidak valid: %v", err)
 	}
+
 	prov, err := data.LookupProvinsi(parsed.KodeProvinsi)
 	if err != nil {
 		prov = "TIDAK DIKETAHUI"
@@ -60,12 +44,9 @@ func processSingle(nikStr string, format string) {
 	}
 	kec, kodePos := parseKecamatan(kecRaw)
 
-	switch format {
-	case "json":
-		output.FormatJSON(nikStr, prov, kab, kec, kodePos, parsed.TanggalLahirStr, parsed.BulanLahirStr, parsed.TahunLahirStr, parsed.JenisKelamin, parsed.UniqCode)
-	default:
-		output.FormatTable(nikStr, prov, kab, kec, kodePos, parsed.TanggalLahirStr, parsed.BulanLahirStr, parsed.TahunLahirStr, parsed.JenisKelamin, parsed.UniqCode)
-	}
+	output.FormatTable(nikStr, prov, kab, kec, kodePos,
+		parsed.TanggalLahirStr, parsed.BulanLahirStr, parsed.TahunLahirStr,
+		parsed.JenisKelamin, parsed.UniqCode)
 }
 
 func parseKecamatan(raw string) (string, string) {
@@ -74,23 +55,4 @@ func parseKecamatan(raw string) (string, string) {
 		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
 	}
 	return strings.TrimSpace(parts[0]), "TIDAK DIKETAHUI"
-}
-
-func processBatch(filePath string, format string) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		log.Fatalf("Gagal membuka file batch: %v", err)
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		processSingle(line, format)
-	}
-	if err := scanner.Err(); err != nil {
-		log.Printf("Error membaca file batch: %v", err)
-	}
 }
